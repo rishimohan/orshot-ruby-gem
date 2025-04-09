@@ -86,7 +86,7 @@ require 'orshot'
 
 client = Orshot::Client.new('os-ha2jdus1cbz1dpt4mktgjyvx')
 
-response = client.render_from_template({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From python sdk new'}, 'response_type' => 'url', 'response_format' => 'png'})
+response = client.render_from_template({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'response_type' => 'url', 'response_format' => 'png'})
 puts response['data']
 ```
 
@@ -103,19 +103,19 @@ require 'orshot'
 
 client = Orshot::Client.new('os-ha2jdus1cbz1dpt4mktgjyvx')
 
-response = client.generate_signed_url({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From python sdk new'}, 'render_type' => 'images', 'response_format' => 'png', 'expires_at' => 1744276943})
+response = client.generate_signed_url({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'render_type' => 'images', 'response_format' => 'png', 'expires_at' => 1744276943})
 puts response['data']
 ```
 
 Output
 
 ```
-{"url"=>"https://api.orshot.com/v1/generate/images?expiresAt=1744276943&id=37&templateId=open-graph-image-1&title=From%20python%20sdk%20new&signature=1225f4b65dd19ce6ac6f03c5fq6e42cfb7e254fac26492b35d58e2e2d65c7021"}
+{"url"=>"https://api.orshot.com/v1/generate/images?expiresAt=1744276943&id=37&templateId=open-graph-image-1&title=From%20ruby%20sdk%20new&signature=1225f4b65dd19ce6ac6f03c5fq6e42cfb7e254fac26492b35d58e2e2d65c7021"}
 ```
 
-## renderFromTemplate
+## render_from_template
 
-Use this function to render an image/pdf. Render template takes in 4 options passed as an object
+Use this function to render an image/pdf. This method accepts a hash with the following keys
 
 | key | required | description |
 |----------|----------|-------------|
@@ -126,9 +126,9 @@ Use this function to render an image/pdf. Render template takes in 4 options pas
 
 For available templates and their modifications refer [Orshot Templates Page](https://orshot.com/templates)
 
-## generateSignedUrl
+## generate_signed_url
 
-Use this function to generate signed URL.
+Use this function to generate signed URL. This method accepts a hash with the following keys
 
 | key | required | description |
 |----------|----------|-------------|
