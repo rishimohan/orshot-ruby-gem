@@ -1,4 +1,4 @@
-# Orshot Node.js API SDK
+# Orshot Ruby API SDK
 
 View on Rubygems: rubygems.org/gems/orshot
 
@@ -27,116 +27,154 @@ If you don't have your API key, get one from [orshot.com](https://orshot.com/).
 ```ruby
 require 'orshot'
 
-client = Orshot::Client.new('os-ha2jdus1cbz1dpt4mktgjyvx')
+client = Orshot::Client.new('YOUR_ORSHOT_API_KEY')
 ```
 
-### Generate image
+## render_from_studio_template
+
+Render from a custom [Studio template](https://orshot.com/features/orshot-studio). Supports image, PDF, video generation and publishing to social accounts.
+
+### Generate Image
 
 ```ruby
-response = client.render_from_template({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'response_type' => 'base64', 'response_format' => 'png'})
-puts response['data']
+response = client.render_from_studio_template({
+  'template_id' => 1234,
+  'modifications' => {
+    'title' => 'Orshot Studio',
+    'description' => 'Generate images from custom templates',
+  },
+  'response' => { 'type' => 'url', 'format' => 'png', 'scale' => 2 },
+})
 ```
 
-### Generate signed URL
+### Generate PDF
 
 ```ruby
-response = client.generate_signed_url({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'render_type' => 'images', 'response_format' => 'png', 'expires_at': 1744276943})
-puts response['data']
+response = client.render_from_studio_template({
+  'template_id' => 1234,
+  'modifications' => { 'title' => 'Invoice #1234' },
+  'response' => { 'type' => 'url', 'format' => 'pdf' },
+  'pdf_options' => {
+    'margin' => '20px',
+    'range_from' => 1,
+    'range_to' => 2,
+    'color_mode' => 'rgb',
+    'dpi' => 300,
+  },
+})
 ```
 
-## Example
-
-### `Base64` response format
+### Generate Video
 
 ```ruby
-require 'orshot'
-
-client = Orshot::Client.new('os-ha2jdus1cbz1dpt4mktgjyvx')
-
-response = client.render_from_template({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'response_type' => 'base64', 'response_format' => 'png'})
-puts response['data']
+response = client.render_from_studio_template({
+  'template_id' => 1234,
+  'modifications' => {
+    'videoElement' => 'https://example.com/custom-video.mp4',
+    'videoElement.trimStart' => 0,
+    'videoElement.trimEnd' => 10,
+  },
+  'response' => { 'type' => 'url', 'format' => 'mp4' },
+  'video_options' => { 'trim_start' => 0, 'trim_end' => 20, 'muted' => false, 'loop' => true },
+})
 ```
 
-Output
-
-```
-{"content"=>"data:image/png;base64,iVBORw0KGgoAA...", "format"=>"png", "type"=>"base64", "responseTime"=>3357.47}
-```
-
-### `Binary` response format
+### Publish to Social Accounts
 
 ```ruby
-require 'orshot'
-
-client = Orshot::Client.new('os-ha2jdus1cbz1dpt4mktgjyvx')
-
-File.open("og.png", "w") do |file|
-  response = client.render_from_template({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'response_type' => 'binary', 'response_format' => 'png'})
-  file.binmode
-  file.write(response)
-end
+response = client.render_from_studio_template({
+  'template_id' => 1234,
+  'modifications' => { 'title' => 'Check out our latest update!' },
+  'response' => { 'type' => 'url', 'format' => 'png' },
+  'publish' => {
+    'accounts' => [1, 2],
+    'content' => 'Check out our latest design!',
+  },
+})
+# response['publish'] => [{'platform' => 'twitter', 'username' => 'acmehq', 'status' => 'published'}, ...]
 ```
 
-Data is written to the file `og.png`
-
-### `URL` response format
+### Schedule a Post
 
 ```ruby
-require 'orshot'
-
-client = Orshot::Client.new('os-ha2jdus1cbz1dpt4mktgjyvx')
-
-response = client.render_from_template({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'response_type' => 'url', 'response_format' => 'png'})
-puts response['data']
+response = client.render_from_studio_template({
+  'template_id' => 1234,
+  'modifications' => { 'title' => 'Scheduled post' },
+  'response' => { 'type' => 'url', 'format' => 'png' },
+  'publish' => {
+    'accounts' => [1],
+    'content' => 'This will be posted later!',
+    'schedule' => { 'scheduled_for' => '2026-04-01T10:00:00Z' },
+    'timezone' => 'America/New_York',
+  },
+})
 ```
 
-Output
+### Parameters
 
-```
-{"content"=>"https://storage.orshot.com/00632982-fd46-44ff-9a61-f52cdf1b8e62/images/nNSTZlMHFkr.png", "type"=>"url", "format"=>"png", "responseTime"=>3950.87}
-```
+| key                              | required | description                                                                    |
+| -------------------------------- | -------- | ------------------------------------------------------------------------------ |
+| `template_id`                    | Yes      | ID of the Studio template (integer).                                           |
+| `modifications`                  | No       | Hash of dynamic modifications for the template.                                |
+| `response.type`                  | No       | `base64`, `binary`, `url` (Defaults to `url`).                                 |
+| `response.format`                | No       | `png`, `webp`, `jpg`, `jpeg`, `pdf`, `mp4`, `webm`, `gif` (Defaults to `png`). |
+| `response.scale`                 | No       | Scale of the output (`1` = original, `2` = double). Defaults to `1`.           |
+| `response.include_pages`         | No       | Page numbers to render for multi-page templates (e.g. `[1, 3]`).               |
+| `response.file_name`             | No       | Custom file name (without extension). Works with `url` and `binary` types.     |
+| `pdf_options`                    | No       | `{ margin, range_from, range_to, color_mode, dpi }`                            |
+| `video_options`                  | No       | `{ trim_start, trim_end, muted, loop }`                                        |
+| `publish.accounts`               | No       | Array of social account IDs from your workspace.                               |
+| `publish.content`                | No       | Caption/text for the social post.                                              |
+| `publish.is_draft`               | No       | `true` to save as draft instead of publishing.                                 |
+| `publish.schedule.scheduled_for` | No       | ISO date string to schedule the post.                                          |
+| `publish.timezone`               | No       | Timezone string (e.g. `"America/New_York"`).                                   |
+| `publish.platform_options`       | No       | Per-account options keyed by account ID.                                       |
 
-### Signed URL
-
-```ruby
-require 'orshot'
-
-client = Orshot::Client.new('os-ha2jdus1cbz1dpt4mktgjyvx')
-
-response = client.generate_signed_url({'template_id' => 'open-graph-image-1', 'modifications' => {'title': 'From ruby sdk new'}, 'render_type' => 'images', 'response_format' => 'png', 'expires_at' => 1744276943})
-puts response['data']
-```
-
-Output
-
-```
-{"url"=>"https://api.orshot.com/v1/generate/images?expiresAt=1744276943&id=37&templateId=open-graph-image-1&title=From%20ruby%20sdk%20new&signature=1225f4b65dd19ce6ac6f03c5fq6e42cfb7e254fac26492b35d58e2e2d65c7021"}
-```
+---
 
 ## render_from_template
 
-Use this function to render an image/pdf. This method accepts a hash with the following keys
+Render from a pre-built Orshot template.
 
-| key | required | description |
-|----------|----------|-------------|
-| `template_id` | Yes | ID of the template (`open-graph-image-1`, `tweet-image-1`, `beautify-screenshot-1`, ...) |
-| `modifications` | Yes | Modifications for the selected template. |
-| `response_type` | No | `base64`, `binary`, `url` (Defaults to `base64`). |
-| `response_format` | No | `png`, `webp`, `pdf`, `jpg`, `jpeg` (Defaults to `png`). |
+```ruby
+response = client.render_from_template({
+  'template_id' => 'open-graph-image-1',
+  'modifications' => { 'title' => 'Hello World' },
+  'response_type' => 'url',
+  'response_format' => 'png',
+})
+```
+
+| key               | required | description                                                      |
+| ----------------- | -------- | ---------------------------------------------------------------- |
+| `template_id`     | Yes      | ID of the template (`open-graph-image-1`, `tweet-image-1`, etc.) |
+| `modifications`   | Yes      | Modifications for the selected template.                         |
+| `response_type`   | No       | `base64`, `binary`, `url` (Defaults to `url`).                   |
+| `response_format` | No       | `png`, `webp`, `pdf`, `jpg`, `jpeg` (Defaults to `png`).         |
 
 For available templates and their modifications refer [Orshot Templates Page](https://orshot.com/templates)
 
 ## generate_signed_url
 
-Use this function to generate signed URL. This method accepts a hash with the following keys
+Generate a signed URL for a template.
 
-| key | required | description |
-|----------|----------|-------------|
-| `template_id` | Yes | ID of the template (`open-graph-image-1`, `tweet-image-1`, `beautify-screenshot-1`, ...) |
-| `modifications` | Yes | Modifications for the selected template. |
-| `expires_at` | Yes | Expires at in unix timestamp (Number). |
-| `render_type` | No | `images`, `pdfs` (Defaults to `images`). |
-| `response_format` | No | `png`, `webp`, `pdf`, `jpg`, `jpeg` (Defaults to `png`). |
+```ruby
+response = client.generate_signed_url({
+  'template_id' => 'open-graph-image-1',
+  'modifications' => { 'title' => 'Hello World' },
+  'expires_at' => 1744276943,
+  'render_type' => 'images',
+  'response_format' => 'png',
+})
+```
+
+| key               | required | description                                              |
+| ----------------- | -------- | -------------------------------------------------------- |
+| `template_id`     | Yes      | ID of the template.                                      |
+| `modifications`   | Yes      | Modifications for the selected template.                 |
+| `expires_at`      | Yes      | Expires at in unix timestamp (Number).                   |
+| `render_type`     | No       | `images`, `pdfs` (Defaults to `images`).                 |
+| `response_format` | No       | `png`, `webp`, `pdf`, `jpg`, `jpeg` (Defaults to `png`). |
 
 ## Development
 
